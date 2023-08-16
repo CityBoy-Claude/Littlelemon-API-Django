@@ -1,5 +1,5 @@
 from django.contrib.auth.models import Group, User
-from django.http import HttpResponseForbidden, HttpResponseNotAllowed
+from django.http import HttpResponseForbidden, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404, render
 from rest_framework import generics, status
 from rest_framework.exceptions import NotFound, PermissionDenied
@@ -17,6 +17,14 @@ class isManagerOrAdmin(BasePermission):
     def has_permission(self, request, view):
         if request.user:
             return request.user.groups.filter(
+                name='Manager') or request.user.is_staff
+        return False
+
+class canPatchOrderDetail(BasePermission):
+    def has_permission(self, request, view):
+        if request.user:
+            return request.user.groups.filter(
+                name='Delivery crew') or request.user.groups.filter(
                 name='Manager') or request.user.is_staff
         return False
 
@@ -156,12 +164,6 @@ class OrderListCreateView(generics.ListCreateAPIView):
         return serializers.OrderSerializer
 
     def get_queryset(self):
-        groups = self.request.user.groups
-        # if groups.filter(name='Manager').exists():
-        #     return models.Order.objects.all()
-        res = models.Order.objects.all()
-        # for order in res:
-        #     print(order)
         return models.Order.objects.all()
 
     def create(self, request, *args, **kwargs):
@@ -223,8 +225,22 @@ class OrderDetailView(generics.RetrieveUpdateDestroyAPIView):
         for orderitem in orderitems:
             orderitem.delete()
         return super().delete(request, *args, **kwargs)
+    
+    def patch(self, request, *args, **kwargs):
+        if 'delivery_crew_id' in request.data.keys():
+            if self.request.user.groups.filter(name='Manager').exists():
+                delivery_crew_id = request.data.get('delivery_crew_id')
+                print(User.objects.get(pk=delivery_crew_id))
+                if not User.objects.get(pk=delivery_crew_id).groups.filter(name='Delivery crew').exists():
+                    return HttpResponseBadRequest()
+            else:
+                return HttpResponseForbidden()
+        return super().patch(request, *args, **kwargs)
 
     def get_permissions(self):
         if self.request.method == 'GET':
             return [IsAuthenticated()]
+        elif self.request.method=='PATCH':
+            print('patch')
+            return [canPatchOrderDetail()]
         return [isManagerOrAdmin()]

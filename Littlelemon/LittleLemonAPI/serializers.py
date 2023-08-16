@@ -81,15 +81,20 @@ class OrderItemSerializer(serializers.ModelSerializer):
 
 
 class OrderSerializer(serializers.ModelSerializer):
-    orderitems = serializers.SerializerMethodField(method_name='get_orderitem')
-
+    orderitems = serializers.SerializerMethodField(read_only=True,method_name='get_orderitem')
+    delivery_crew_id = serializers.IntegerField(write_only=True)
     class Meta:
         model = models.Order
         fields = [
-            'orderitems', 'user', 'delivery_crew', 'status', 'total', 'date',
+            'orderitems', 'user', 'delivery_crew','delivery_crew_id', 'status', 'total', 'date',
             'id'
         ]
-
+        extra_kwargs = {
+            'user':{'read_only':True},
+            'total':{'read_only':True},
+            'date':{'read_only':True},
+            'id':{'read_only':True}
+        }
     def get_orderitem(self, obj):
         orderitems = models.OrderItem.objects.filter(order=obj)
         print(orderitems)
