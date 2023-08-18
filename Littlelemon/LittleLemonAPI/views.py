@@ -180,7 +180,13 @@ class OrderListCreateView(generics.ListCreateAPIView):
         return serializers.OrderSerializer
 
     def get_queryset(self):
-        return models.Order.objects.all()
+        user=self.request.user
+        user_groups = user.groups
+        if user_groups.filter(name='Manager').exists():
+            return models.Order.objects.all()
+        if user_groups.filter(name='Delivery crew').exists():
+            return models.Order.objects.filter(delivery_crew=user.id)
+        return models.Order.objects.filter(user=user)
 
     def create(self, request, *args, **kwargs):
         user = request.user

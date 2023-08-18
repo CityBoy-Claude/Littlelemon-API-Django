@@ -82,7 +82,7 @@ class OrderItemSerializer(serializers.ModelSerializer):
 
 class OrderSerializer(serializers.ModelSerializer):
     orderitems = serializers.SerializerMethodField(read_only=True,method_name='get_orderitem')
-    delivery_crew_id = serializers.IntegerField(write_only=True)
+    delivery_crew_id = serializers.IntegerField(required=False,allow_null=True,write_only=True)
     class Meta:
         model = models.Order
         fields = [
@@ -90,8 +90,6 @@ class OrderSerializer(serializers.ModelSerializer):
             'id'
         ]
         extra_kwargs = {
-            'user':{'read_only':True},
-            'total':{'read_only':True},
             'date':{'read_only':True},
             'id':{'read_only':True}
         }
