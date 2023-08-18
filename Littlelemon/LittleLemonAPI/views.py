@@ -50,7 +50,23 @@ class MenuItemsListView(generics.ListCreateAPIView):
         return serializers.MenuItemSerializer
 
     def get_queryset(self):
-        return models.MenuItem.objects.all()
+        items=models.MenuItem.objects.all()
+        # filters
+        category_name=self.request.query_params.get('category')
+        to_price=self.request.query_params.get('to_price')
+        from_price=self.request.query_params.get('from_price')
+        if category_name:
+            items=items.filter(category__title=category_name)
+        if to_price:
+            items=items.filter(price__lte=to_price)
+        if from_price:
+            items=items.filter(price__gte=from_price)
+        # ordering
+        ordering=self.request.query_params.get('ordering')
+        if ordering:
+            ordering_fields=ordering.split(",")
+            items = items.order_by(*ordering_fields)
+        return items
 
     def get_permissions(self):
         if self.request.method == 'GET':
