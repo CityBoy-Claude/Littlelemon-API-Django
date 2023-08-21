@@ -182,11 +182,27 @@ class OrderListCreateView(generics.ListCreateAPIView):
     def get_queryset(self):
         user=self.request.user
         user_groups = user.groups
+        items=models.Order.objects.all()
+        # filter by user
         if user_groups.filter(name='Manager').exists():
-            return models.Order.objects.all()
-        if user_groups.filter(name='Delivery crew').exists():
-            return models.Order.objects.filter(delivery_crew=user.id)
-        return models.Order.objects.filter(user=user)
+            pass
+        elif user_groups.filter(name='Delivery crew').exists():
+            items=models.Order.objects.filter(delivery_crew=user.id)
+        else:
+            items=models.Order.objects.filter(user=user)
+        # filters
+        status=self.request.query_params.get('status')
+        order_user=self.request.query_params.get('user')
+        if status:
+            items=items.filter(status=status)
+        if order_user:
+            items=items.filter(user=order_user)
+        # ordering
+        ordering=self.request.query_params.get('ordering')
+        if ordering:
+            ordering_fields=ordering.split(",")
+            items = items.order_by(*ordering_fields)
+        return items
 
     def create(self, request, *args, **kwargs):
         user = request.user

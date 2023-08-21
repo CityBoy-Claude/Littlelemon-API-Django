@@ -95,5 +95,4 @@ class OrderSerializer(serializers.ModelSerializer):
         }
     def get_orderitem(self, obj):
         orderitems = models.OrderItem.objects.filter(order=obj)
-        print(orderitems)
         return OrderItemSerializer(orderitems, many=True).data
