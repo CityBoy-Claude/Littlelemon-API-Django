@@ -5,6 +5,7 @@ from rest_framework import generics, status
 from rest_framework.exceptions import NotFound, PermissionDenied
 from rest_framework.permissions import (BasePermission, IsAdminUser,
                                         IsAuthenticated)
+from rest_framework.throttling import UserRateThrottle, AnonRateThrottle
 
 from . import models, serializers
 from rest_framework.response import Response
@@ -178,6 +179,9 @@ class OrderListCreateView(generics.ListCreateAPIView):
 
     def get_serializer_class(self):
         return serializers.OrderSerializer
+    
+    def get_throttles(self):
+        return [UserRateThrottle()]
 
     def get_queryset(self):
         user=self.request.user
